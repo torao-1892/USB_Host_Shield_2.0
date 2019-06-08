@@ -6,10 +6,12 @@
 
 #include <Wii.h>
 #include <usbhub.h>
-// Satisfy IDE, which only needs to see the include statment in the ino.
+
+// Satisfy the IDE, which needs to see the include statment in the ino too.
 #ifdef dobogusinclude
 #include <spi4teensy3.h>
 #endif
+#include <SPI.h>
 
 USB Usb;
 //USBHub Hub1(&Usb); // Some dongles have a hub inside
@@ -23,7 +25,9 @@ bool printAngle;
 
 void setup() {
   Serial.begin(115200);
+#if !defined(__MIPSEL__)
   while (!Serial); // Wait for serial port to connect - used on Leonardo, Teensy and other boards with built-in USB CDC serial connection
+#endif
   if (Usb.Init() == -1) {
     Serial.print(F("\r\nOSC did not start"));
     while (1); //halt
@@ -78,6 +82,7 @@ void loop() {
         Serial.print(F("\r\nB"));
       }
     }
+#if 0 // Set this to 1 in order to see the angle of the controllers
     if (printAngle) {
       Serial.print(F("\r\nPitch: "));
       Serial.print(Wii.getPitch());
@@ -94,7 +99,9 @@ void loop() {
         Serial.print(Wii.getNunchuckRoll());
       }
     }
+#endif
   }
+#if 0 // Set this to 1 if you are using a Nunchuck controller
   if (Wii.nunchuckConnected) {
     if (Wii.getButtonClick(Z))
       Serial.print(F("\r\nZ"));
@@ -107,4 +114,5 @@ void loop() {
       Serial.print(Wii.getAnalogHat(HatY));
     }
   }
+#endif
 }

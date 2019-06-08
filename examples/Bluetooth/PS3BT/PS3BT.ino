@@ -6,10 +6,12 @@
 
 #include <PS3BT.h>
 #include <usbhub.h>
-// Satisfy IDE, which only needs to see the include statment in the ino.
+
+// Satisfy the IDE, which needs to see the include statment in the ino too.
 #ifdef dobogusinclude
 #include <spi4teensy3.h>
 #endif
+#include <SPI.h>
 
 USB Usb;
 //USBHub Hub1(&Usb); // Some dongles have a hub inside
@@ -19,12 +21,13 @@ BTD Btd(&Usb); // You have to create the Bluetooth Dongle instance like so
 PS3BT PS3(&Btd); // This will just create the instance
 //PS3BT PS3(&Btd, 0x00, 0x15, 0x83, 0x3D, 0x0A, 0x57); // This will also store the bluetooth address - this can be obtained from the dongle when running the sketch
 
-boolean printTemperature;
-boolean printAngle;
+bool printTemperature, printAngle;
 
 void setup() {
   Serial.begin(115200);
+#if !defined(__MIPSEL__)
   while (!Serial); // Wait for serial port to connect - used on Leonardo, Teensy and other boards with built-in USB CDC serial connection
+#endif
   if (Usb.Init() == -1) {
     Serial.print(F("\r\nOSC did not start"));
     while (1); //halt
@@ -57,15 +60,20 @@ void loop() {
         Serial.print(PS3.getAnalogButton(R2));
       }
     }
+
     if (PS3.getButtonClick(PS)) {
       Serial.print(F("\r\nPS"));
       PS3.disconnect();
     }
     else {
-      if (PS3.getButtonClick(TRIANGLE))
+      if (PS3.getButtonClick(TRIANGLE)) {
         Serial.print(F("\r\nTraingle"));
-      if (PS3.getButtonClick(CIRCLE))
+        PS3.setRumbleOn(RumbleLow);
+      }
+      if (PS3.getButtonClick(CIRCLE)) {
         Serial.print(F("\r\nCircle"));
+        PS3.setRumbleOn(RumbleHigh);
+      }
       if (PS3.getButtonClick(CROSS))
         Serial.print(F("\r\nCross"));
       if (PS3.getButtonClick(SQUARE))
@@ -118,13 +126,16 @@ void loop() {
         printAngle = !printAngle;
       }
     }
+#if 0 // Set this to 1 in order to see the angle of the controller
     if (printAngle) {
       Serial.print(F("\r\nPitch: "));
       Serial.print(PS3.getAngle(Pitch));
       Serial.print(F("\tRoll: "));
       Serial.print(PS3.getAngle(Roll));
     }
+#endif
   }
+#if 0 // Set this to 1 in order to enable support for the Playstation Move controller
   else if (PS3.PS3MoveConnected) {
     if (PS3.getAnalogButton(T)) {
       Serial.print(F("\r\nT: "));
@@ -177,4 +188,5 @@ void loop() {
       Serial.print(PS3.getTemperature());
     }
   }
+#endif
 }

@@ -18,7 +18,7 @@ e-mail   :  support@circuitsathome.com
 #include "hiduniversal.h"
 
 HIDUniversal::HIDUniversal(USB *p) :
-HID(p),
+USBHID(p),
 qNextPollTime(0),
 pollInterval(0),
 bPollEnable(false),
@@ -59,7 +59,8 @@ void HIDUniversal::Initialize() {
         for(uint8_t i = 0; i < totalEndpoints; i++) {
                 epInfo[i].epAddr = 0;
                 epInfo[i].maxPktSize = (i) ? 0 : 8;
-                epInfo[i].epAttribs = 0;
+                epInfo[i].bmSndToggle = 0;
+                epInfo[i].bmRcvToggle = 0;
                 epInfo[i].bmNakPower = (i) ? USB_NAK_NOWAIT : USB_NAK_MAX_POWER;
         }
         bNumEP = 1;
@@ -103,7 +104,7 @@ uint8_t HIDUniversal::Init(uint8_t parent, uint8_t port, bool lowspeed) {
         uint8_t len = 0;
 
         uint8_t num_of_conf; // number of configurations
-        //uint8_t		num_of_intf;	// number of interfaces
+        //uint8_t num_of_intf; // number of interfaces
 
         AddressPool &addrPool = pUsb->GetAddressPool();
 
@@ -200,7 +201,7 @@ uint8_t HIDUniversal::Init(uint8_t parent, uint8_t port, bool lowspeed) {
         USBTRACE2("NC:", num_of_conf);
 
         for(uint8_t i = 0; i < num_of_conf; i++) {
-                //HexDumper<USBReadParser, uint16_t, uint16_t>		HexDump;
+                //HexDumper<USBReadParser, uint16_t, uint16_t> HexDump;
                 ConfigDescParser<USB_CLASS_HID, 0, 0,
                         CP_MASK_COMPARE_CLASS> confDescrParser(this);
 
@@ -314,16 +315,15 @@ void HIDUniversal::EndpointXtract(uint8_t conf, uint8_t iface, uint8_t alt, uint
                 bNumIface++;
         }
 
-        if((pep->bmAttributes & 0x03) == 3 && (pep->bEndpointAddress & 0x80) == 0x80)
-                index = epInterruptInIndex;
-        else
-                index = epInterruptOutIndex;
+        if((pep->bmAttributes & bmUSB_TRANSFER_TYPE) == USB_TRANSFER_TYPE_INTERRUPT)
+                index = (pep->bEndpointAddress & 0x80) == 0x80 ? epInterruptInIndex : epInterruptOutIndex;
 
         if(index) {
                 // Fill in the endpoint info structure
                 epInfo[bNumEP].epAddr = (pep->bEndpointAddress & 0x0F);
                 epInfo[bNumEP].maxPktSize = (uint8_t)pep->wMaxPacketSize;
-                epInfo[bNumEP].epAttribs = 0;
+                epInfo[bNumEP].bmSndToggle = 0;
+                epInfo[bNumEP].bmRcvToggle = 0;
                 epInfo[bNumEP].bmNakPower = USB_NAK_NOWAIT;
 
                 // Fill in the endpoint index list
@@ -370,8 +370,8 @@ uint8_t HIDUniversal::Poll() {
         if(!bPollEnable)
                 return 0;
 
-        if((long)(millis() - qNextPollTime) >= 0L) {
-                qNextPollTime = millis() + pollInterval;
+        if((int32_t)((uint32_t)millis() - qNextPollTime) >= 0L) {
+                qNextPollTime = (uint32_t)millis() + pollInterval;
 
                 uint8_t buf[constBuffLen];
 
@@ -417,4 +417,9 @@ uint8_t HIDUniversal::Poll() {
                 }
         }
         return rcode;
+}
+
+// Send a report to interrupt out endpoint. This is NOT SetReport() request!
+uint8_t HIDUniversal::SndRpt(uint16_t nbytes, uint8_t *dataptr) {
+        return pUsb->outTransfer(bAddress, epInfo[epInterruptOutIndex].epAddr, nbytes, dataptr);
 }

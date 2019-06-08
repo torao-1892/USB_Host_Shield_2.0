@@ -51,7 +51,8 @@ bPollEnable(false) { // don't start polling before dongle is connected
         for(uint8_t i = 0; i < XBOX_MAX_ENDPOINTS; i++) {
                 epInfo[i].epAddr = 0;
                 epInfo[i].maxPktSize = (i) ? 0 : 8;
-                epInfo[i].epAttribs = 0;
+                epInfo[i].bmSndToggle = 0;
+                epInfo[i].bmRcvToggle = 0;
                 epInfo[i].bmNakPower = (i) ? USB_NAK_NOWAIT : USB_NAK_MAX_POWER;
         }
 
@@ -167,13 +168,13 @@ uint8_t XBOXOLD::Init(uint8_t parent, uint8_t port, bool lowspeed) {
 
         /* Initialize data structures for endpoints of device */
         epInfo[ XBOX_INPUT_PIPE ].epAddr = 0x01; // XBOX report endpoint
-        epInfo[ XBOX_INPUT_PIPE ].epAttribs = EP_INTERRUPT;
+        epInfo[ XBOX_INPUT_PIPE ].epAttribs = USB_TRANSFER_TYPE_INTERRUPT;
         epInfo[ XBOX_INPUT_PIPE ].bmNakPower = USB_NAK_NOWAIT; // Only poll once for interrupt endpoints
         epInfo[ XBOX_INPUT_PIPE ].maxPktSize = EP_MAXPKTSIZE;
         epInfo[ XBOX_INPUT_PIPE ].bmSndToggle = 0;
         epInfo[ XBOX_INPUT_PIPE ].bmRcvToggle = 0;
         epInfo[ XBOX_OUTPUT_PIPE ].epAddr = 0x02; // XBOX output endpoint
-        epInfo[ XBOX_OUTPUT_PIPE ].epAttribs = EP_INTERRUPT;
+        epInfo[ XBOX_OUTPUT_PIPE ].epAttribs = USB_TRANSFER_TYPE_INTERRUPT;
         epInfo[ XBOX_OUTPUT_PIPE ].bmNakPower = USB_NAK_NOWAIT; // Only poll once for interrupt endpoints
         epInfo[ XBOX_OUTPUT_PIPE ].maxPktSize = EP_MAXPKTSIZE;
         epInfo[ XBOX_OUTPUT_PIPE ].bmSndToggle = 0;
@@ -279,7 +280,7 @@ void XBOXOLD::readReport() {
         }
 }
 
-void XBOXOLD::printReport(uint16_t length) { //Uncomment "#define PRINTREPORT" to print the report send by the Xbox controller
+void XBOXOLD::printReport(uint16_t length __attribute__((unused))) { //Uncomment "#define PRINTREPORT" to print the report send by the Xbox controller
 #ifdef PRINTREPORT
         if(readBuf == NULL)
                 return;

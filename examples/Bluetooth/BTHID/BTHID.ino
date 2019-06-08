@@ -8,10 +8,12 @@
 #include <usbhub.h>
 #include "KeyboardParser.h"
 #include "MouseParser.h"
-// Satisfy IDE, which only needs to see the include statment in the ino.
+
+// Satisfy the IDE, which needs to see the include statment in the ino too.
 #ifdef dobogusinclude
 #include <spi4teensy3.h>
 #endif
+#include <SPI.h>
 
 USB Usb;
 //USBHub Hub1(&Usb); // Some dongles have a hub inside
@@ -30,18 +32,20 @@ MouseRptParser mousePrs;
 
 void setup() {
   Serial.begin(115200);
+#if !defined(__MIPSEL__)
   while (!Serial); // Wait for serial port to connect - used on Leonardo, Teensy and other boards with built-in USB CDC serial connection
+#endif
   if (Usb.Init() == -1) {
     Serial.print(F("\r\nOSC did not start"));
     while (1); // Halt
   }
 
-  bthid.SetReportParser(KEYBOARD_PARSER_ID, (HIDReportParser*)&keyboardPrs);
-  bthid.SetReportParser(MOUSE_PARSER_ID, (HIDReportParser*)&mousePrs);
+  bthid.SetReportParser(KEYBOARD_PARSER_ID, &keyboardPrs);
+  bthid.SetReportParser(MOUSE_PARSER_ID, &mousePrs);
 
   // If "Boot Protocol Mode" does not work, then try "Report Protocol Mode"
   // If that does not work either, then uncomment PRINTREPORT in BTHID.cpp to see the raw report
-  bthid.setProtocolMode(HID_BOOT_PROTOCOL); // Boot Protocol Mode
+  bthid.setProtocolMode(USB_HID_BOOT_PROTOCOL); // Boot Protocol Mode
   //bthid.setProtocolMode(HID_RPT_PROTOCOL); // Report Protocol Mode
 
   Serial.print(F("\r\nHID Bluetooth Library Started"));

@@ -1,20 +1,22 @@
 #include <hidboot.h>
 #include <usbhub.h>
-// Satisfy IDE, which only needs to see the include statment in the ino.
+
+// Satisfy the IDE, which needs to see the include statment in the ino too.
 #ifdef dobogusinclude
 #include <spi4teensy3.h>
 #endif
+#include <SPI.h>
 
 class MouseRptParser : public MouseReportParser
 {
 protected:
-	virtual void OnMouseMove	(MOUSEINFO *mi);
-	virtual void OnLeftButtonUp	(MOUSEINFO *mi);
-	virtual void OnLeftButtonDown	(MOUSEINFO *mi);
-	virtual void OnRightButtonUp	(MOUSEINFO *mi);
-	virtual void OnRightButtonDown	(MOUSEINFO *mi);
-	virtual void OnMiddleButtonUp	(MOUSEINFO *mi);
-	virtual void OnMiddleButtonDown	(MOUSEINFO *mi);
+	void OnMouseMove	(MOUSEINFO *mi);
+	void OnLeftButtonUp	(MOUSEINFO *mi);
+	void OnLeftButtonDown	(MOUSEINFO *mi);
+	void OnRightButtonUp	(MOUSEINFO *mi);
+	void OnRightButtonDown	(MOUSEINFO *mi);
+	void OnMiddleButtonUp	(MOUSEINFO *mi);
+	void OnMiddleButtonDown	(MOUSEINFO *mi);
 };
 void MouseRptParser::OnMouseMove(MOUSEINFO *mi)
 {
@@ -50,16 +52,16 @@ void MouseRptParser::OnMiddleButtonDown	(MOUSEINFO *mi)
 
 USB     Usb;
 USBHub     Hub(&Usb);
-HIDBoot<HID_PROTOCOL_MOUSE>    HidMouse(&Usb);
-
-uint32_t next_time;
+HIDBoot<USB_HID_PROTOCOL_MOUSE>    HidMouse(&Usb);
 
 MouseRptParser                               Prs;
 
 void setup()
 {
     Serial.begin( 115200 );
+#if !defined(__MIPSEL__)
     while (!Serial); // Wait for serial port to connect - used on Leonardo, Teensy and other boards with built-in USB CDC serial connection
+#endif
     Serial.println("Start");
 
     if (Usb.Init() == -1)
@@ -67,9 +69,7 @@ void setup()
 
     delay( 200 );
 
-    next_time = millis() + 5000;
-
-    HidMouse.SetReportParser(0,(HIDReportParser*)&Prs);
+    HidMouse.SetReportParser(0, &Prs);
 }
 
 void loop()

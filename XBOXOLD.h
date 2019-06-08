@@ -19,13 +19,11 @@
 #define _xboxold_h_
 
 #include "Usb.h"
+#include "usbhid.h"
 #include "controllerEnums.h"
 
 /* Data Xbox taken from descriptors */
 #define EP_MAXPKTSIZE       32 // Max size for data via USB
-
-/* Endpoint types */
-#define EP_INTERRUPT        0x03
 
 /* Names we give to the 3 Xbox pipes */
 #define XBOX_CONTROL_PIPE    0
@@ -41,10 +39,6 @@
 #define XBOX_OLD_PID2                           0x0285 // Original Microsoft Xbox controller (Japan)
 #define XBOX_OLD_PID3                           0x0287 // Microsoft Microsoft Xbox Controller S
 #define XBOX_OLD_PID4                           0x0289 // Smaller Microsoft Xbox controller (US)
-
-// Used in control endpoint header for HID Commands
-#define bmREQ_HID_OUT USB_SETUP_HOST_TO_DEVICE|USB_SETUP_TYPE_CLASS|USB_SETUP_RECIPIENT_INTERFACE
-#define HID_REQUEST_SET_REPORT      0x09
 
 #define XBOX_MAX_ENDPOINTS   3
 
@@ -65,17 +59,17 @@ public:
          * @param  lowspeed Speed of the device.
          * @return          0 on success.
          */
-        virtual uint8_t Init(uint8_t parent, uint8_t port, bool lowspeed);
+        uint8_t Init(uint8_t parent, uint8_t port, bool lowspeed);
         /**
          * Release the USB device.
          * @return 0 on success.
          */
-        virtual uint8_t Release();
+        uint8_t Release();
         /**
          * Poll the USB Input endpoins and run the state machines.
          * @return 0 on success.
          */
-        virtual uint8_t Poll();
+        uint8_t Poll();
 
         /**
          * Get the device address.
@@ -99,7 +93,7 @@ public:
          * @param  pid The device's PID.
          * @return     Returns true if the device's VID and PID matches this driver.
          */
-        virtual boolean VIDPIDOK(uint16_t vid, uint16_t pid) {
+        virtual bool VIDPIDOK(uint16_t vid, uint16_t pid) {
                 return ((vid == XBOX_VID || vid == MADCATZ_VID || vid == JOYTECH_VID) && (pid == XBOX_OLD_PID1 || pid == XBOX_OLD_PID2 || pid == XBOX_OLD_PID3 || pid == XBOX_OLD_PID4));
         };
         /**@}*/

@@ -27,7 +27,8 @@ bPollEnable(false) { // don't start polling before dongle is connected
         for(uint8_t i = 0; i < XBOX_MAX_ENDPOINTS; i++) {
                 epInfo[i].epAddr = 0;
                 epInfo[i].maxPktSize = (i) ? 0 : 8;
-                epInfo[i].epAttribs = 0;
+                epInfo[i].bmSndToggle = 0;
+                epInfo[i].bmRcvToggle = 0;
                 epInfo[i].bmNakPower = (i) ? USB_NAK_NOWAIT : USB_NAK_MAX_POWER;
         }
 
@@ -105,7 +106,7 @@ uint8_t XBOXUSB::Init(uint8_t parent, uint8_t port, bool lowspeed) {
                 Notify(PSTR("\r\nThis library only supports Xbox 360 controllers via USB"), 0x80);
 #endif
                 goto FailUnknownDevice;
-        } else if(PID != XBOX_WIRED_PID && PID != MADCATZ_WIRED_PID && PID != GAMESTOP_WIRED_PID && PID != AFTERGLOW_WIRED_PID) // Check PID
+        } else if(PID != XBOX_WIRED_PID && PID != MADCATZ_WIRED_PID && PID != GAMESTOP_WIRED_PID && PID != AFTERGLOW_WIRED_PID && PID != JOYTECH_WIRED_PID) // Check PID
                 goto FailUnknownDevice;
 
         // Allocate new address according to device class
@@ -155,13 +156,13 @@ uint8_t XBOXUSB::Init(uint8_t parent, uint8_t port, bool lowspeed) {
 
         /* Initialize data structures for endpoints of device */
         epInfo[ XBOX_INPUT_PIPE ].epAddr = 0x01; // XBOX 360 report endpoint
-        epInfo[ XBOX_INPUT_PIPE ].epAttribs = EP_INTERRUPT;
+        epInfo[ XBOX_INPUT_PIPE ].epAttribs = USB_TRANSFER_TYPE_INTERRUPT;
         epInfo[ XBOX_INPUT_PIPE ].bmNakPower = USB_NAK_NOWAIT; // Only poll once for interrupt endpoints
         epInfo[ XBOX_INPUT_PIPE ].maxPktSize = EP_MAXPKTSIZE;
         epInfo[ XBOX_INPUT_PIPE ].bmSndToggle = 0;
         epInfo[ XBOX_INPUT_PIPE ].bmRcvToggle = 0;
         epInfo[ XBOX_OUTPUT_PIPE ].epAddr = 0x02; // XBOX 360 output endpoint
-        epInfo[ XBOX_OUTPUT_PIPE ].epAttribs = EP_INTERRUPT;
+        epInfo[ XBOX_OUTPUT_PIPE ].epAttribs = USB_TRANSFER_TYPE_INTERRUPT;
         epInfo[ XBOX_OUTPUT_PIPE ].bmNakPower = USB_NAK_NOWAIT; // Only poll once for interrupt endpoints
         epInfo[ XBOX_OUTPUT_PIPE ].maxPktSize = EP_MAXPKTSIZE;
         epInfo[ XBOX_OUTPUT_PIPE ].bmSndToggle = 0;
@@ -357,5 +358,5 @@ void XBOXUSB::onInit() {
         if(pFuncOnInit)
                 pFuncOnInit(); // Call the user function
         else
-                setLedOn(LED1);
+                setLedOn(static_cast<LEDEnum>(LED1));
 }

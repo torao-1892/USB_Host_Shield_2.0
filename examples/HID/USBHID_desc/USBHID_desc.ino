@@ -1,12 +1,14 @@
-#include <hid.h>
+#include <usbhid.h>
 #include <hiduniversal.h>
 #include <hidescriptorparser.h>
 #include <usbhub.h>
 #include "pgmstrings.h"
-// Satisfy IDE, which only needs to see the include statment in the ino.
+
+// Satisfy the IDE, which needs to see the include statment in the ino too.
 #ifdef dobogusinclude
 #include <spi4teensy3.h>
 #endif
+#include <SPI.h>
 
 class HIDUniversal2 : public HIDUniversal
 {
@@ -14,7 +16,7 @@ public:
     HIDUniversal2(USB *usb) : HIDUniversal(usb) {};
 
 protected:
-    virtual uint8_t OnInitSuccessful();
+    uint8_t OnInitSuccessful();
 };
 
 uint8_t HIDUniversal2::OnInitSuccessful()
@@ -54,7 +56,9 @@ UniversalReportParser Uni;
 void setup()
 {
   Serial.begin( 115200 );
+#if !defined(__MIPSEL__)
   while (!Serial); // Wait for serial port to connect - used on Leonardo, Teensy and other boards with built-in USB CDC serial connection
+#endif
   Serial.println("Start");
 
   if (Usb.Init() == -1)

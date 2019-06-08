@@ -20,8 +20,8 @@
 // To enable serial debugging see "settings.h"
 //#define PRINTREPORT // Uncomment to print the report send by the PS Buzz Controllers
 
-void PSBuzz::ParseHIDData(HID *hid, bool is_rpt_id, uint8_t len, uint8_t *buf) {
-        if (HIDUniversal::VID == PSBUZZ_VID && HIDUniversal::PID == PSBUZZ_PID && len > 0 && buf) {
+void PSBuzz::ParseHIDData(USBHID *hid __attribute__((unused)), bool is_rpt_id __attribute__((unused)), uint8_t len, uint8_t *buf) {
+        if (HIDUniversal::VID == PSBUZZ_VID && HIDUniversal::PID == PSBUZZ_PID && len > 2 && buf) {
 #ifdef PRINTREPORT
                 Notify(PSTR("\r\n"), 0x80);
                 for (uint8_t i = 0; i < len; i++) {
@@ -29,7 +29,7 @@ void PSBuzz::ParseHIDData(HID *hid, bool is_rpt_id, uint8_t len, uint8_t *buf) {
                         Notify(PSTR(" "), 0x80);
                 }
 #endif
-                memcpy(&psbuzzButtons, buf + 2, min(len - 2, sizeof(psbuzzButtons)));
+                memcpy(&psbuzzButtons, buf + 2, min((uint8_t)(len - 2), MFK_CASTUINT8T sizeof(psbuzzButtons)));
 
                 if (psbuzzButtons.val != oldButtonState.val) { // Check if anything has changed
                         buttonClickState.val = psbuzzButtons.val & ~oldButtonState.val; // Update click state variable
@@ -78,5 +78,5 @@ void PSBuzz::setLedRaw(bool value, uint8_t controller) {
 
 void PSBuzz::PSBuzz_Command(uint8_t *data, uint16_t nbytes) {
         // bmRequest = Host to device (0x00) | Class (0x20) | Interface (0x01) = 0x21, bRequest = Set Report (0x09), Report ID (0x00), Report Type (Output 0x02), interface (0x00), datalength, datalength, data)
-        pUsb->ctrlReq(bAddress, epInfo[0].epAddr, bmREQ_HIDOUT, HID_REQUEST_SET_REPORT, 0x00, 0x02, 0x00, nbytes, nbytes, data, NULL);
+        pUsb->ctrlReq(bAddress, epInfo[0].epAddr, bmREQ_HID_OUT, HID_REQUEST_SET_REPORT, 0x00, 0x02, 0x00, nbytes, nbytes, data, NULL);
 };
